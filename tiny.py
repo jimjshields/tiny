@@ -10,6 +10,9 @@ def demo_app(environ, start_response):
 
 	status = '200 OK'
 	headers = [('Content-type', 'text/plain')]
+	
+	print 'Starting response from demo_app to server.'
+
 	start_response(status, headers)
 
 	return ['Hello world!']
@@ -19,11 +22,18 @@ def wsgiref_server(app, host='', port=8080):
 	   Can override default host and port if desired."""
 	
 	from wsgiref.simple_server import make_server
+
+	print 'Starting wsgiref_server.'
+
 	server = make_server(host, port, app)
 	server.serve_forever()
 
 def run_app(app):
-	"""Runs a given app with a WSGIref server."""
+	"""Runs a given app with a WSGIref server.
+	   The server does this by invoking the 'callable' provided by the app.
+	   This is to WSGI specs."""
+
+	print 'wsgiref_server is invoking the WSGI callable object.'
 
 	wsgiref_server(app)
 
