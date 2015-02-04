@@ -3,19 +3,7 @@ tiny.py is a practice project that implements the
 most basic possible web framework in Python.
 """
 
-# TODO: WSGI Server
-
-def demo_app(environ, start_response):
-	"""Creates a demo WSGI app."""
-
-	status = '200 OK'
-	headers = [('Content-type', 'text/plain')]
-	
-	print 'Starting response from demo_app to server.'
-
-	start_response(status, headers)
-
-	return ['Hello world!']
+import re
 
 def wsgiref_server(app, host='', port=8080):
 	"""Implements a WSGIref server and serves continuously.
@@ -37,11 +25,69 @@ def run_app(app):
 
 	wsgiref_server(app)
 
-# TODO: HTTP
+# FIX: Implement requests most stably/generalizably (likely in a class).
+# TODO: Add handling of POST (and other) requests.
 
-# TODO: Request class
+def request_handler(environ, start_response):
+	"""The simplest request handler possible. This runs when the client makes
+	   a request. The server has gotten the environ dictionary from the client
+	   when the client made the request and is passing it to the request handler
+	   for parsing and handling the request. The server also provides the
+	   start_response function which is called below."""
 
-# TODO: Response class
+	http_pattern = re.compile('HTTP_.*')
+	
+	# TODO: Store the parsed request data in a class.
+	# Storing the useful environ data - the headers - in Python variables.
+	path = environ.get('PATH_INFO', '')
+	method = environ.get('REQUEST_METHOD', '')
+	query_string = environ.get('QUERY_STRING', '')
+	content_length = environ.get('CONTENT_LENGTH', '')
+	http_headers = {k: environ[k] for k in environ if re.match(http_pattern, k)}
+
+	# FIX: Parse queries more cleanly.
+
+	if query_string != '':
+		queries = [query.split('=') for query in query_string.split('&')]
+		queries = {q[0]: q[1] for q in queries}
+	else:
+		queries = None
+
+	# FIX: Implement routing more intelligently than a conditional statement.
+
+	if path not in ['/', '/user', '/environ']:
+		# Status, headers represent the HTTP response expected by the client.
+		status = '404 NOT FOUND'
+
+		# Important that this remains a list as specified by WSGI specs.
+		headers = [('Content-type', 'text/plain')]
+
+		# start_response is used to begin the HTTP response.
+		# This sends the response headers to the server, which sends to the client.
+		start_response(status, headers)
+		
+		return ['Not found']
+	else:
+		# Status, headers represent the HTTP response expected by the client.
+		status = '200 OK'
+
+		# Important that this remains a list as specified by WSGI specs.
+		headers = [('Content-type', 'text/html')]
+		
+		# start_response is used to begin the HTTP response.
+		# This sends the response headers to the server, which sends to the client.
+		start_response(status, headers)
+
+		if path == '/user':
+			return ['Here\'s the user trying to access: %s' % (environ.get('USER', ''))]
+		elif path == '/environ':
+			return [environ_string]
+		else:
+			return ['Hello %s!' % (queries['name'])]
+
+run_app(request_handler)
+
+# TODO: Response
 
 # TODO: Headers
 
