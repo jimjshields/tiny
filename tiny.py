@@ -4,6 +4,7 @@ most basic possible web framework in Python.
 """
 
 import re
+import cgi
 
 def wsgiref_server(app, host='', port=8080):
 	"""Implements a WSGIref server and serves continuously.
@@ -53,8 +54,16 @@ def request_handler(environ, start_response):
 	else:
 		queries = None
 
-	# FIX: Implement routing more intelligently than a conditional statement.
+	# FIX: Figure out how to deal w/ POST requests and parse their data.
+	if content_length:
+		content = environ.get('wsgi.input').read(int(content_length))
+		print content
 
+	if method == 'POST':
+		form = cgi.FieldStorage()
+		print form.getvalue('name')
+
+	# URL Routing
 	if path not in URLS:
 		# Status, headers represent the HTTP response expected by the client.
 		status = '404 NOT FOUND'
@@ -94,7 +103,7 @@ def index(environ):
 	return 'Home'
 
 def jim(environ):
-	return 'Jim'
+	return '<form method="POST"><input type="text" name="name"><input type="text" name="movie"><input type="submit"></form>'
 
 # URLS
 
