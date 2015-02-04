@@ -55,7 +55,7 @@ def request_handler(environ, start_response):
 
 	# FIX: Implement routing more intelligently than a conditional statement.
 
-	if path not in ['/', '/user', '/environ']:
+	if path not in URLS:
 		# Status, headers represent the HTTP response expected by the client.
 		status = '404 NOT FOUND'
 
@@ -78,14 +78,8 @@ def request_handler(environ, start_response):
 		# This sends the response headers to the server, which sends to the client.
 		start_response(status, headers)
 
-		if path == '/user':
-			return ['Here\'s the user trying to access: %s' % (environ.get('USER', ''))]
-		elif path == '/environ':
-			return [environ_string]
-		else:
-			return ['Hello %s!' % (queries['name'])]
-
-run_app(request_handler)
+		content = [URLS[path](environ)]
+		return content
 
 # TODO: Response
 
@@ -93,4 +87,25 @@ run_app(request_handler)
 
 # TODO: Routing
 
+def user(environ):
+	return 'Here\'s the user trying to access: %s' % (environ.get('USER', ''))
+
+def index(environ):
+	return 'Home'
+
+def jim(environ):
+	return 'Jim'
+
+# URLS
+
+URLS = {
+	'/index': index,
+	'/': index,
+	'/user': user,
+	'/jim': jim
+}
+
 # TODO: Error handling
+
+if __name__ == '__main__':
+	run_app(request_handler)
