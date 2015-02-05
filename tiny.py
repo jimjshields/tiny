@@ -49,19 +49,19 @@ def request_handler(environ, start_response):
 	# FIX: Parse queries more cleanly.
 
 	if query_string != '':
-		queries = [query.split('=') for query in query_string.split('&')]
-		queries = {q[0]: q[1] for q in queries}
+		queries_data = [query.split('=') for query in query_string.split('&')]
+		queries_data = {q[0]: q[1] for q in queries_data}
 	else:
-		queries = None
+		queries_data = None
 
-	# FIX: Figure out how to deal w/ POST requests and parse their data.
-	if content_length:
-		content = environ.get('wsgi.input').read(int(content_length))
-		print content
+	# FIX: Parse POST requests more cleanly.
 
+	post_data = None
+	form = cgi.FieldStorage(fp=environ.get('wsgi.input'), environ=environ)
 	if method == 'POST':
-		form = cgi.FieldStorage()
-		print form.getvalue('name')
+		post_data = {key: form.getvalue(key) for key in form.keys()}
+	elif method == 'GET':
+		queries_data = {key: form.getvalue(key) for key in form.keys()}
 
 	# URL Routing
 	if path not in URLS:
@@ -87,7 +87,10 @@ def request_handler(environ, start_response):
 		# This sends the response headers to the server, which sends to the client.
 		start_response(status, headers)
 
-		content = [URLS[path](environ)]
+		if post_data:
+			content = [URLS[path](environ, post_data)]
+		else:
+			content = [URLS[path](environ, queries_data)]
 		return content
 
 # TODO: Response
@@ -96,14 +99,24 @@ def request_handler(environ, start_response):
 
 # TODO: Routing
 
-def user(environ):
-	return 'Here\'s the user trying to access: %s' % (environ.get('USER', ''))
+def user(environ, post_data='', queries_data=''):
+	html = '<html><form method="post">'
+	html += '<input type="text" name="name" placeholder="Name"><br>'
+	html += '<input type="text" name="movie" placeholder="Favorite Movie"><br>'
+	html += '<input type="submit"></form></html>'
+	return (html +
+			'Here\'s the user trying to access: %s'\
+			'and here\'s what they got: %s' % (environ.get('USER', ''), queries_data))
 
 def index(environ):
 	return 'Home'
 
 def jim(environ):
-	return '<form method="POST"><input type="text" name="name"><input type="text" name="movie"><input type="submit"></form>'
+	html = '<html><form method="post">'
+	html += '<input type="text" name="name" placeholder="Name"><br>'
+	html += '<input type="text" name="movie" placeholder="Favorite Movie"><br>'
+	html += '<input type="submit"></form></html>'
+	return html
 
 # URLS
 
