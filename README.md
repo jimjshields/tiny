@@ -8,7 +8,10 @@
   5. ~~[Parse queries more cleanly](https://github.com/jimjshields/tiny/commit/6ab7452ae689b0089dce8b9ea9619cc60f29d7c0)~~
   6. ~~[Handle requests more intelligently](https://github.com/jimjshields/tiny/commit/4e2fab42d38475eda23a68483b69ddda3b78e82b)~~
   7. ~~[Handle responses more intelligently](https://github.com/jimjshields/tiny/commit/4e2fab42d38475eda23a68483b69ddda3b78e82b)~~
-  8. Generalize routing (through a decorator or similar)
+  7. Move matching URLs into its own method
+  8. Make decorator for creating URLs
+  9. Store HTTP statuses somewhere
+  10. Generalize HTTP statuses/headers
 
 * Overall Plan
   1. ~~[WSGI Server](https://github.com/jimjshields/tiny/commit/b41241cb2ca3b97bb86be41b81e23fb6e8c8abad)~~
