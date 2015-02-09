@@ -12,7 +12,8 @@ def wsgiref_server(app, host='', port=8080):
 	
 	from wsgiref.simple_server import make_server
 
-	print 'Starting wsgiref_server.'
+	host_pretty = 'localhost' if host == '' else host
+	print 'Starting wsgiref_server at %s:%s' % (host_pretty, port)
 
 	server = make_server(host, port, app)
 	server.serve_forever()
@@ -25,6 +26,27 @@ def run_app(app):
 	print 'wsgiref_server is invoking the WSGI callable object.'
 
 	wsgiref_server(app)
+
+# TODO: Routing
+
+def user(post_data='', queries_data=''):
+	html = '<html><form method="post">'
+	html += '<input type="text" name="name" placeholder="Name"><br>'
+	html += '<input type="text" name="movie" placeholder="Favorite Movie"><br>'
+	html += '<input type="submit"></form></html>'
+	return (html +
+			'Here\'s what you entered: %s' % (post_data))
+
+def index():
+	return 'Home'
+
+# URLS
+
+URLS = {
+	'/index': index,
+	'/': index,
+	'/user': user
+}
 
 # FIX: Implement requests most stably/generalizably (likely in a class).
 # TODO: Add handling of POST (and other) requests.
@@ -48,16 +70,17 @@ def request_handler(environ, start_response):
 
 	# FIX: Parse queries more cleanly.
 
-	if query_string != '':
-		queries_data = [query.split('=') for query in query_string.split('&')]
-		queries_data = {q[0]: q[1] for q in queries_data}
-	else:
-		queries_data = None
+	# if query_string != '':
+	# 	queries_data = [query.split('=') for query in query_string.split('&')]
+	# 	queries_data = {q[0]: q[1] for q in queries_data}
+	# else:
+	# 	queries_data = None
 
 	# FIX: Parse POST requests more cleanly.
 
 	post_data = None
-	form = cgi.FieldStorage(fp=environ.get('wsgi.input'), environ=environ)
+	queries_data = None
+	form = cgi.FieldStorage(fp=environ.get('wsgi.input'))
 	if method == 'POST':
 		post_data = {key: form.getvalue(key) for key in form.keys()}
 	elif method == 'GET':
@@ -88,44 +111,16 @@ def request_handler(environ, start_response):
 		start_response(status, headers)
 
 		if post_data:
-			content = [URLS[path](environ, post_data)]
+			content = URLS[path](post_data)
+		elif queries_data:
+			content = URLS[path](post_data)
 		else:
-			content = [URLS[path](environ, queries_data)]
-		return content
+			content = URLS[path]()
+		return [content]
 
 # TODO: Response
 
 # TODO: Headers
-
-# TODO: Routing
-
-def user(environ, post_data='', queries_data=''):
-	html = '<html><form method="post">'
-	html += '<input type="text" name="name" placeholder="Name"><br>'
-	html += '<input type="text" name="movie" placeholder="Favorite Movie"><br>'
-	html += '<input type="submit"></form></html>'
-	return (html +
-			'Here\'s the user trying to access: %s'\
-			'and here\'s what they got: %s' % (environ.get('USER', ''), queries_data))
-
-def index(environ):
-	return 'Home'
-
-def jim(environ):
-	html = '<html><form method="post">'
-	html += '<input type="text" name="name" placeholder="Name"><br>'
-	html += '<input type="text" name="movie" placeholder="Favorite Movie"><br>'
-	html += '<input type="submit"></form></html>'
-	return html
-
-# URLS
-
-URLS = {
-	'/index': index,
-	'/': index,
-	'/user': user,
-	'/jim': jim
-}
 
 # TODO: Error handling
 
