@@ -99,6 +99,8 @@ def post_request_handler(request):
 	# start_response(status, headers)
 	return TinyResponse(status, headers, body)
 
+### TinyResponse Class ###
+
 class TinyResponse(object):
 	"""Represents a response object."""
 
@@ -107,9 +109,9 @@ class TinyResponse(object):
 		self.headers = headers
 		self.body = body
 
-### Request Class ###
+### TinyRequest Class ###
 
-class Request(object):
+class TinyRequest(object):
 	"""Represents a request object. It is initialized upon starting the app.
 	   When a user makes a request, it will bind user's request information
 	   (environment, queries, post data) to the request object so that it can
@@ -175,7 +177,7 @@ URLS = {
 }
 
 # Initialize the global request object, which will store any request data.
-request = Request()
+request = TinyRequest()
 
 if __name__ == '__main__':
 	run_app(request_handler)
