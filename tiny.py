@@ -5,6 +5,8 @@ most basic possible web framework in Python.
 
 import cgi
 
+### Server and run script ###
+
 def wsgiref_server(app, host='', port=8080):
 	"""Implements a WSGIref server and serves continuously.
 	   Can override default host and port if desired."""
@@ -25,6 +27,8 @@ def run_app(app):
 	print 'wsgiref_server is invoking the WSGI callable object.'
 
 	wsgiref_server(app)
+
+### Request Handler ###
 
 def request_handler(environ, start_response):
 	"""This runs when the client makes a request. The server got the environ 
@@ -68,6 +72,8 @@ def request_handler(environ, start_response):
 			else:
 				content = URLS[request.path]()
 		return [content]
+
+### Request Class ###
 
 class Request(object):
 	"""Represents a request object. It is initialized upon starting the app.
@@ -116,6 +122,8 @@ class Request(object):
 
 # TODO: Better routing
 
+### Routing ###
+
 def index():
 	return 'Home'
 
@@ -126,6 +134,8 @@ def user(user_name=''):
 		return '<h1>User not found.</h1>'
 
 # TODO: Better URL handling
+
+### URLs ###
 
 URLS = {
 	'/index': index,
