@@ -60,8 +60,6 @@ def request_handler(environ, start_response):
 
 	http_pattern = re.compile('HTTP_.*')
 	
-	path = environ.get('PATH_INFO', '')
-	method = environ.get('REQUEST_METHOD', '')
 	query_string = environ.get('QUERY_STRING', '')
 	content_length = environ.get('CONTENT_LENGTH', '')
 	http_headers = {k: environ[k] for k in environ if re.match(http_pattern, k)}
@@ -131,6 +129,7 @@ class Request(object):
 		self.path = self.environ.get('PATH_INFO', '/')
 		self.path = '/' + self.path if not self.path[0] == '/' else self.path
 		self.method = self.environ.get('REQUEST_METHOD', '')
+
 
 request = Request()
 
