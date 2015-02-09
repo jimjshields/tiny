@@ -3,7 +3,10 @@ tiny.py is a practice project that implements the
 most basic possible web framework in Python.
 """
 
-import cgi
+import cgi, inspect
+from urls import *
+
+### Server and run script ###
 
 def wsgiref_server(app, host='', port=8080):
 	"""Implements a WSGIref server and serves continuously.
@@ -25,6 +28,8 @@ def run_app(app):
 	print 'wsgiref_server is invoking the WSGI callable object.'
 
 	wsgiref_server(app)
+
+### Request Handlers ###
 
 def request_handler(environ, start_response):
 	"""This runs when the client makes a request. The server got the environ 
@@ -50,26 +55,55 @@ def request_handler(environ, start_response):
 		
 		return ['Not found']
 	else:
-		# Status, headers represent the HTTP response expected by the client.
-		status = '200 OK'
-
-		# Important that this remains a list as specified by WSGI specs.
-		headers = [('Content-type', 'text/html')]
-		
-		# start_response is used to begin the HTTP response.
-		# This sends the response headers to the server, which sends to the client.
-		start_response(status, headers)
-
 		if request.method == 'POST':
-			content = URLS[request.path](request.post_data)
+			response = post_request_handler(request)
 		elif request.method == 'GET':
-			if request.get_data != None:
-				content = URLS[request.path](request.get_data)
-			else:
-				content = URLS[request.path]()
-		return [content]
+			response = get_request_handler(request)
+		
+		start_response(response.status, response.headers)
+		return [response.body]
 
-class Request(object):
+def get_request_handler(request):
+	
+	fun_name = URLS[request.path]
+	arg_num = len(inspect.getargspec(fun_name)[0])
+
+	if arg_num == 0:
+		body = fun_name()
+	else:
+		body = fun_name(request.get_data)
+
+	# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error
+
+	status = '200 OK'
+	headers = [('Content-type', 'text/html')]
+
+	response = TinyResponse()
+	response.bind(status, headers, body)
+	return response
+
+def post_request_handler(request):
+
+	fun_name = URLS[request.path]
+	arg_num = len(inspect.getargspec(fun_name)[0])
+
+	if arg_num == 0:
+		body = fun_name()
+	else:
+		body = fun_name(request.post_data)
+
+	# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error
+
+	status = '200 OK'
+	headers = [('Content-type', 'text/html')]
+
+	response = TinyResponse()
+	response.bind(status, headers, body)
+	return response
+
+### TinyRequest Class ###
+
+class TinyRequest(object):
 	"""Represents a request object. It is initialized upon starting the app.
 	   When a user makes a request, it will bind user's request information
 	   (environment, queries, post data) to the request object so that it can
@@ -96,10 +130,7 @@ class Request(object):
 
 		form = cgi.FieldStorage(fp=self.environ.get('wsgi.input'), environ=self.environ)
 		get_dict = {key: form.getvalue(key) for key in form.keys()}
-		if get_dict == {}:
-			return None
-		else:
-			return get_dict
+		return get_dict
 
 	def post(self):
 		"""Parses the data of a post request and returns it in a dictionary."""
@@ -108,33 +139,27 @@ class Request(object):
 		post_dict = {key: form.getvalue(key) for key in form.keys()}
 		return post_dict
 
-# TODO: Response
+### TinyResponse Class ###
+
+class TinyResponse(object):
+	"""Represents a request object. It is initialized upon starting the app.
+	   When a user makes a request, the app will formulate the response based
+	   on the request data. Tiny will bind that response data to an object of
+	   this class."""
+
+	def bind(self, status, headers, body):
+		"""Binds the response object to the app's response data."""
+		self.status = status
+		self.headers = headers
+		self.body = body
 
 # TODO: Headers
 
 # TODO: Error handling
 
-# TODO: Better routing
-
-def index():
-	return 'Home'
-
-def user(user_name=''):
-	if user_name != '':
-		return '<h1>%s</h1>' % (user_name['name'])
-	else:
-		return '<h1>User not found.</h1>'
-
-# TODO: Better URL handling
-
-URLS = {
-	'/index': index,
-	'/': index,
-	'/user': user
-}
-
 # Initialize the global request object, which will store any request data.
-request = Request()
+request = TinyRequest()
+response = TinyResponse()
 
 if __name__ == '__main__':
 	run_app(request_handler)
