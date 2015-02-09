@@ -3,7 +3,7 @@ tiny.py is a practice project that implements the
 most basic possible web framework in Python.
 """
 
-import cgi
+import cgi, inspect
 
 ### Server and run script ###
 
@@ -39,6 +39,7 @@ def request_handler(environ, start_response):
 	   function which is called below."""
 
 	request.bind(environ)
+	print request.environ
 
 	# URL Routing
 	if request.path not in URLS:
@@ -54,24 +55,57 @@ def request_handler(environ, start_response):
 		
 		return ['Not found']
 	else:
-		# Status, headers represent the HTTP response expected by the client.
-		status = '200 OK'
-
-		# Important that this remains a list as specified by WSGI specs.
-		headers = [('Content-type', 'text/html')]
-		
-		# start_response is used to begin the HTTP response.
-		# This sends the response headers to the server, which sends to the client.
-		start_response(status, headers)
-
 		if request.method == 'POST':
-			content = URLS[request.path](request.post_data)
+			response = post_request_handler(request)
 		elif request.method == 'GET':
-			if request.get_data != None:
-				content = URLS[request.path](request.get_data)
-			else:
-				content = URLS[request.path]()
-		return [content]
+			response = get_request_handler(request)
+		
+		start_response(response.status, response.headers)
+		return [response.body]
+
+def get_request_handler(request):
+	# check if the content is good - if so send it through; otherwise throw an HTTP error
+	
+	fun_name = URLS[request.path]
+	arg_num = len(inspect.getargspec(fun_name)[0])
+
+	if arg_num == 0:
+		body = fun_name()
+	else:
+		body = fun_name(request.get_data)
+
+	status = '200 OK'
+	headers = [('Content-type', 'text/html')]
+
+	return TinyResponse(status, headers, body)
+
+
+
+def post_request_handler(request):
+	# check if the content is good - if so send it through; otherwise throw an HTTP error
+
+	content = URLS[request.path](request.post_data)
+
+	
+
+	# # Status, headers represent the HTTP response expected by the client.
+	# status = '200 OK'
+
+	# # Important that this remains a list as specified by WSGI specs.
+	# headers = [('Content-type', 'text/html')]
+	
+	# # start_response is used to begin the HTTP response.
+	# # This sends the response headers to the server, which sends to the client.
+	# start_response(status, headers)
+	return TinyResponse(status, headers, body)
+
+class TinyResponse(object):
+	"""Represents a response object."""
+
+	def __init__(self, status, headers, body):
+		self.status = status
+		self.headers = headers
+		self.body = body
 
 ### Request Class ###
 
@@ -102,10 +136,7 @@ class Request(object):
 
 		form = cgi.FieldStorage(fp=self.environ.get('wsgi.input'), environ=self.environ)
 		get_dict = {key: form.getvalue(key) for key in form.keys()}
-		if get_dict == {}:
-			return None
-		else:
-			return get_dict
+		return get_dict
 
 	def post(self):
 		"""Parses the data of a post request and returns it in a dictionary."""
