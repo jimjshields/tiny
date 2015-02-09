@@ -124,7 +124,7 @@ def post_request_handler(request):
 	response.bind(status, headers, body)
 	return response
 
-### TinyRequest Class ###
+### Request and Response Classes ###
 
 class TinyRequest(object):
 	"""Represents a request object. An empty one is created upon starting the app.
@@ -167,8 +167,6 @@ class TinyRequest(object):
 		post_dict = {key: form.getvalue(key) for key in form.keys()}
 		return post_dict
 
-### TinyResponse Class ###
-
 class TinyResponse(object):
 	"""Represents a request object. It is initialized upon starting the app.
 	   When a user makes a request, the app will formulate the response based
@@ -180,6 +178,18 @@ class TinyResponse(object):
 		self.status = status
 		self.headers = headers
 		self.body = body
+
+# TODO: Routing decorator - doesn't work yet
+
+def add_handler(handler, url, methods=['GET']):
+	"""Adds a handler function to the URLS dict for routing."""
+
+	URLS[url] = (handler, methods)
+	return handler
+
+# TODO: Store URLs
+URLS = {}
+
 
 # TODO: Headers
 
