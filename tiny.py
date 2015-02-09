@@ -3,7 +3,6 @@ tiny.py is a practice project that implements the
 most basic possible web framework in Python.
 """
 
-import re
 import cgi
 
 def wsgiref_server(app, host='', port=8080):
@@ -27,62 +26,48 @@ def run_app(app):
 
 	wsgiref_server(app)
 
-# TODO: Routing
-
-def index():
-	return 'Home'
-
-# FIX: Better URL handling
-
-URLS = {
-	'/index': index,
-	'/': index,
-	'/user': user
-}
-
-# FIX: Implement requests most stably/generalizably (likely in a class).
-# TODO: Add handling of POST (and other) requests.
-
 def request_handler(environ, start_response):
-	"""The simplest request handler possible. This runs when the client makes
-	   a request. The server has gotten the environ dictionary from the client
-	   when the client made the request and is passing it to the request handler
-	   for parsing and handling the request. The server also provides the
-	   start_response function which is called below."""
+	"""This runs when the client makes a request. The server got the environ 
+	   from the client when the client made the request and is passing it to 
+	   the request handler for parsing and doing something w/ the request. This 
+	   is implemented by binding the environment to a Request object, which does 
+	   the parsing and storing. The server also provides the start_response
+	   function which is called below."""
 
 	request.bind(environ)
 
 	# URL Routing
-	# if path not in URLS:
-	# 	# Status, headers represent the HTTP response expected by the client.
-	# 	status = '404 NOT FOUND'
+	if request.path not in URLS:
+		# Status, headers represent the HTTP response expected by the client.
+		status = '404 NOT FOUND'
 
-	# 	# Important that this remains a list as specified by WSGI specs.
-	# 	headers = [('Content-type', 'text/plain')]
+		# Important that this remains a list as specified by WSGI specs.
+		headers = [('Content-type', 'text/plain')]
 
-	# 	# start_response is used to begin the HTTP response.
-	# 	# This sends the response headers to the server, which sends to the client.
-	# 	start_response(status, headers)
+		# start_response is used to begin the HTTP response.
+		# This sends the response headers to the server, which sends to the client.
+		start_response(status, headers)
 		
-	# 	return ['Not found']
-	# else:
-	# 	# Status, headers represent the HTTP response expected by the client.
-	# 	status = '200 OK'
+		return ['Not found']
+	else:
+		# Status, headers represent the HTTP response expected by the client.
+		status = '200 OK'
 
-	# 	# Important that this remains a list as specified by WSGI specs.
-	# 	headers = [('Content-type', 'text/html')]
+		# Important that this remains a list as specified by WSGI specs.
+		headers = [('Content-type', 'text/html')]
 		
-	# 	# start_response is used to begin the HTTP response.
-	# 	# This sends the response headers to the server, which sends to the client.
-	# 	start_response(status, headers)
+		# start_response is used to begin the HTTP response.
+		# This sends the response headers to the server, which sends to the client.
+		start_response(status, headers)
 
-	# 	if post_data:
-	# 		content = URLS[path](post_data)
-	# 	elif queries_data:
-	# 		content = URLS[path](post_data)
-	# 	else:
-	# 		content = URLS[path]()
-	# 	return [content]
+		if request.method == 'POST':
+			content = URLS[request.path](request.post_data)
+		elif request.method == 'GET':
+			if request.get_data != None:
+				content = URLS[request.path](request.get_data)
+			else:
+				content = URLS[request.path]()
+		return [content]
 
 class Request(object):
 	"""Represents a request object. It is initialized upon starting the app.
@@ -111,7 +96,10 @@ class Request(object):
 
 		form = cgi.FieldStorage(fp=self.environ.get('wsgi.input'), environ=self.environ)
 		get_dict = {key: form.getvalue(key) for key in form.keys()}
-		return get_dict
+		if get_dict == {}:
+			return None
+		else:
+			return get_dict
 
 	def post(self):
 		"""Parses the data of a post request and returns it in a dictionary."""
@@ -120,13 +108,33 @@ class Request(object):
 		post_dict = {key: form.getvalue(key) for key in form.keys()}
 		return post_dict
 
-request = Request()
-
 # TODO: Response
 
 # TODO: Headers
 
 # TODO: Error handling
+
+# TODO: Better routing
+
+def index():
+	return 'Home'
+
+def user(user_name=''):
+	if user_name != '':
+		return '<h1>%s</h1>' % (user_name['name'])
+	else:
+		return '<h1>User not found.</h1>'
+
+# TODO: Better URL handling
+
+URLS = {
+	'/index': index,
+	'/': index,
+	'/user': user
+}
+
+# Initialize the global request object, which will store any request data.
+request = Request()
 
 if __name__ == '__main__':
 	run_app(request_handler)
