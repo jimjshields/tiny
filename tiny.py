@@ -118,6 +118,27 @@ def request_handler(environ, start_response):
 			content = URLS[path]()
 		return [content]
 
+class Request(object):
+	"""Represents a request object. It is initialized upon starting the app.
+	   When a user makes a request, it will bind user's request information
+	   (environment, queries, post data) to the request object so that it can
+	   be used elsewhere."""
+
+	def __init__(self):
+		"""Initializes an empty request object."""
+
+		self.environ = {}
+		self.post_data = {}
+		self.get_data = {}
+
+	def bind(self, **kwargs):
+		"""Binds the request object to the user's request data."""
+
+		self.environ = environ
+		self.post_data = post_data
+		self.get_data = get_data
+
+
 # TODO: Response
 
 # TODO: Headers
