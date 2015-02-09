@@ -29,18 +29,10 @@ def run_app(app):
 
 # TODO: Routing
 
-def user(post_data='', queries_data=''):
-	html = '<html><form method="post">'
-	html += '<input type="text" name="name" placeholder="Name"><br>'
-	html += '<input type="text" name="movie" placeholder="Favorite Movie"><br>'
-	html += '<input type="submit"></form></html>'
-	return (html +
-			'Here\'s what you entered: %s' % (post_data))
-
 def index():
 	return 'Home'
 
-# URLS
+# FIX: Better URL handling
 
 URLS = {
 	'/index': index,
@@ -58,31 +50,7 @@ def request_handler(environ, start_response):
 	   for parsing and handling the request. The server also provides the
 	   start_response function which is called below."""
 
-	http_pattern = re.compile('HTTP_.*')
-	
-	query_string = environ.get('QUERY_STRING', '')
-	content_length = environ.get('CONTENT_LENGTH', '')
-	http_headers = {k: environ[k] for k in environ if re.match(http_pattern, k)}
-
 	request.bind(environ)
-
-	# FIX: Parse queries more cleanly.
-
-	# if query_string != '':
-	# 	queries_data = [query.split('=') for query in query_string.split('&')]
-	# 	queries_data = {q[0]: q[1] for q in queries_data}
-	# else:
-	# 	queries_data = None
-
-	# FIX: Parse POST requests more cleanly.
-
-	# post_data = None
-	# queries_data = None
-	# form = cgi.FieldStorage(fp=environ.get('wsgi.input'))
-	# if method == 'POST':
-	# 	post_data = {key: form.getvalue(key) for key in form.keys()}
-	# elif method == 'GET':
-	# 	queries_data = {key: form.getvalue(key) for key in form.keys()}
 
 	# URL Routing
 	# if path not in URLS:
@@ -128,8 +96,29 @@ class Request(object):
 		self.environ = environ
 		self.path = self.environ.get('PATH_INFO', '/')
 		self.path = '/' + self.path if not self.path[0] == '/' else self.path
-		self.method = self.environ.get('REQUEST_METHOD', '')
+		self.method = self.environ.get('REQUEST_METHOD', '').upper()
+		self.get_data = None
+		self.post_data = None
 
+		if self.method == 'GET':
+			self.get_data = self.get()
+		elif self.method == 'POST':
+			self.post_data = self.post()
+
+	def get(self):
+		"""Parses the query string of a get request and returns it in 
+		   a dictionary."""
+
+		form = cgi.FieldStorage(fp=self.environ.get('wsgi.input'), environ=self.environ)
+		get_dict = {key: form.getvalue(key) for key in form.keys()}
+		return get_dict
+
+	def post(self):
+		"""Parses the data of a post request and returns it in a dictionary."""
+
+		form = cgi.FieldStorage(fp=self.environ.get('wsgi.input'), environ=self.environ)
+		post_dict = {key: form.getvalue(key) for key in form.keys()}
+		return post_dict
 
 request = Request()
 
