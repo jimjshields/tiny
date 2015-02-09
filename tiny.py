@@ -60,13 +60,13 @@ def request_handler(environ, start_response):
 
 	http_pattern = re.compile('HTTP_.*')
 	
-	# TODO: Store the parsed request data in a class.
-	# Storing the useful environ data - the headers - in Python variables.
 	path = environ.get('PATH_INFO', '')
 	method = environ.get('REQUEST_METHOD', '')
 	query_string = environ.get('QUERY_STRING', '')
 	content_length = environ.get('CONTENT_LENGTH', '')
 	http_headers = {k: environ[k] for k in environ if re.match(http_pattern, k)}
+
+	request.bind(environ)
 
 	# FIX: Parse queries more cleanly.
 
@@ -78,45 +78,45 @@ def request_handler(environ, start_response):
 
 	# FIX: Parse POST requests more cleanly.
 
-	post_data = None
-	queries_data = None
-	form = cgi.FieldStorage(fp=environ.get('wsgi.input'))
-	if method == 'POST':
-		post_data = {key: form.getvalue(key) for key in form.keys()}
-	elif method == 'GET':
-		queries_data = {key: form.getvalue(key) for key in form.keys()}
+	# post_data = None
+	# queries_data = None
+	# form = cgi.FieldStorage(fp=environ.get('wsgi.input'))
+	# if method == 'POST':
+	# 	post_data = {key: form.getvalue(key) for key in form.keys()}
+	# elif method == 'GET':
+	# 	queries_data = {key: form.getvalue(key) for key in form.keys()}
 
 	# URL Routing
-	if path not in URLS:
-		# Status, headers represent the HTTP response expected by the client.
-		status = '404 NOT FOUND'
+	# if path not in URLS:
+	# 	# Status, headers represent the HTTP response expected by the client.
+	# 	status = '404 NOT FOUND'
 
-		# Important that this remains a list as specified by WSGI specs.
-		headers = [('Content-type', 'text/plain')]
+	# 	# Important that this remains a list as specified by WSGI specs.
+	# 	headers = [('Content-type', 'text/plain')]
 
-		# start_response is used to begin the HTTP response.
-		# This sends the response headers to the server, which sends to the client.
-		start_response(status, headers)
+	# 	# start_response is used to begin the HTTP response.
+	# 	# This sends the response headers to the server, which sends to the client.
+	# 	start_response(status, headers)
 		
-		return ['Not found']
-	else:
-		# Status, headers represent the HTTP response expected by the client.
-		status = '200 OK'
+	# 	return ['Not found']
+	# else:
+	# 	# Status, headers represent the HTTP response expected by the client.
+	# 	status = '200 OK'
 
-		# Important that this remains a list as specified by WSGI specs.
-		headers = [('Content-type', 'text/html')]
+	# 	# Important that this remains a list as specified by WSGI specs.
+	# 	headers = [('Content-type', 'text/html')]
 		
-		# start_response is used to begin the HTTP response.
-		# This sends the response headers to the server, which sends to the client.
-		start_response(status, headers)
+	# 	# start_response is used to begin the HTTP response.
+	# 	# This sends the response headers to the server, which sends to the client.
+	# 	start_response(status, headers)
 
-		if post_data:
-			content = URLS[path](post_data)
-		elif queries_data:
-			content = URLS[path](post_data)
-		else:
-			content = URLS[path]()
-		return [content]
+	# 	if post_data:
+	# 		content = URLS[path](post_data)
+	# 	elif queries_data:
+	# 		content = URLS[path](post_data)
+	# 	else:
+	# 		content = URLS[path]()
+	# 	return [content]
 
 class Request(object):
 	"""Represents a request object. It is initialized upon starting the app.
@@ -124,20 +124,15 @@ class Request(object):
 	   (environment, queries, post data) to the request object so that it can
 	   be used elsewhere."""
 
-	def __init__(self):
-		"""Initializes an empty request object."""
-
-		self.environ = {}
-		self.post_data = {}
-		self.get_data = {}
-
-	def bind(self, **kwargs):
+	def bind(self, environ):
 		"""Binds the request object to the user's request data."""
 
 		self.environ = environ
-		self.post_data = post_data
-		self.get_data = get_data
+		self.path = self.environ.get('PATH_INFO', '/')
+		self.path = '/' + self.path if not self.path[0] == '/' else self.path
+		self.method = self.environ.get('REQUEST_METHOD', '')
 
+request = Request()
 
 # TODO: Response
 
