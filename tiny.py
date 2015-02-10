@@ -41,7 +41,7 @@ class TinyRequest(object):
 	   (environment, queries, post data) to the request object so that it can
 	   be used elsewhere."""
 
-	def bind(self, environ):
+	def __init__(self, environ):
 		"""Binds the request object to the user's request data."""
 
 		self.environ = environ
@@ -120,12 +120,13 @@ class TinyApp(object):
 		   a response and send it back to the server using the start_response
 		   function, which is provided by the server."""
 
-		# Bind the global request object to the environ dict provided by the server.
-		request.bind(environ)
+		request = TinyRequest(environ)
+
+		action = self.ROUTES[request.path]
 
 		# URL Routing
 		# TODO: Move this into its own function/method
-		if request.path not in self.ROUTES:
+		if request.path not in self.ROUTES or request.method not in action[1]:
 			# Status, headers represent the HTTP response expected by the client.
 			status = '404 NOT FOUND'
 
@@ -139,69 +140,22 @@ class TinyApp(object):
 			# TODO: Don't determine this here; use the URL routing/error handling to do this.
 			return ['Not found']
 		else:
+			action_fun = action[0]
 
-			# TODO: Do this elsewhere.
-			# Checks for the request method and responds accordingly.
-			if request.method == 'POST':
-				response = self.post_request_handler(request)
-			elif request.method == 'GET':
-				response = self.get_request_handler(request)
+			# Store num of arguments in the handler function.
+			arg_num = len(inspect.getargspec(action_fun)[0])
+
+			# If there aren't any arguments, don't pass the get_data dict to it.
+			if arg_num == 0:
+				response = action_fun()
+			else:
+				response = action_fun(request)
 			
 			# Sends the start of the response to the server, which sends it to the client.
 			start_response(response.status, response.headers)
 
 			# Sends the body of the response (usually, the html) to the server.
 			return [response.body]
-
-	def get_request_handler(self, request):
-		"""Handles GET requests."""
-		
-		# Find the function name given by the path.
-		# TODO: Do URL matching on its own.
-		fun_name = self.ROUTES[request.path][0]
-
-		# Store num of arguments in the handler function.
-		arg_num = len(inspect.getargspec(fun_name)[0])
-
-		# If there aren't any arguments, don't pass the get_data dict to it.
-		if arg_num == 0:
-			body = fun_name()
-		else:
-			body = fun_name(request.get_data)
-
-		# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error.
-
-		status = '200 OK'
-		headers = [('Content-type', 'text/html')]
-
-		# Bind the crafted response data to the global response object and return it.
-		response.bind(status, headers, body)
-		return response
-
-	def post_request_handler(self, request):
-		"""Handles POST requests."""
-
-		# Find the function name given by the path.
-		# TODO: Do URL matching on its own.
-		fun_name = self.ROUTES[request.path][0]
-		
-		# Store num of arguments in the handler function.
-		arg_num = len(inspect.getargspec(fun_name)[0])
-
-		# If there aren't any arguments, don't pass the get_data dict to it.
-		if arg_num == 0:
-			body = fun_name()
-		else:
-			body = fun_name(request.post_data)
-
-		# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error
-
-		status = '200 OK'
-		headers = [('Content-type', 'text/html')]
-
-		# Bind the crafted response data to the global response object and return it.
-		response.bind(status, headers, body)
-		return response
 
 	def __call__(self, environ, start_response):
 		"""Makes the user's app a WSGI application. It is now callable by
@@ -216,8 +170,6 @@ class TinyApp(object):
 # TODO: Error handling
 
 # Initialize the global request object, which will store any request data.
-request = TinyRequest()
-response = TinyResponse()
 
 if __name__ == '__main__':
 	run_app(request_handler)
