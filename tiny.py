@@ -82,11 +82,14 @@ class TinyResponse(object):
 	   on the request data. Tiny will bind that response data to an object of
 	   this class."""
 
-	def __init__(self, status, headers, body):
-		"""Creates a response object that can hold the data for the HTTP response."""
+	def __init__(self, body, status='200 OK', headers=[('Content-Type', 'text/html')]):
+		"""Creates a response object that can hold the data for the HTTP response.
+		   Defaults to a '200 OK' response with HTML content but allows user to 
+		   override."""
+		
+		self.body = body
 		self.status = status
 		self.headers = headers
-		self.body = body
 
 class TinyApp(object):
 	"""Represents an app created by the user.
