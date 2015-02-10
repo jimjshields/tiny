@@ -1,4 +1,18 @@
-##Tiny - A small web framework to be. Inspired by [Flask](https://github.com/mitsuhiko/flask), [Bottle](https://github.com/bottlepy/bottle), and [Itty](https://github.com/toastdriven/itty/).
+##Tiny - The tiniest possible web framework. Inspired by [Flask](https://github.com/mitsuhiko/flask), [Bottle](https://github.com/bottlepy/bottle), and [Itty](https://github.com/toastdriven/itty/).
+
+Example:
+
+    import tiny
+
+    app = tiny.TinyApp()
+
+    @app.route('/')
+    def index():
+        response = tiny.TinyResponse('Hello world')
+        return response
+
+    tiny.run_app(app)
+
 
 * To Do:
   1. ~~[Implement WSGI interface](https://github.com/jimjshields/tiny/commit/b41241cb2ca3b97bb86be41b81e23fb6e8c8abad)~~
