@@ -35,45 +35,6 @@ def run_app(app):
 
 ### Request Handlers ###
 
-def request_handler(environ, start_response):
-	"""When the client makes a request, the server gets the environ w/ the
-	   request and passes it here. The handler uses the environ data to craft
-	   a response and send it back to the server using the start_response
-	   function, which is provided by the server."""
-
-	# Bind the global request object to the environ dict provided by the server.
-	request.bind(environ)
-
-	# URL Routing
-	# TODO: Move this into its own function/method
-	if request.path not in URLS:
-		# Status, headers represent the HTTP response expected by the client.
-		status = '404 NOT FOUND'
-
-		# Important that this remains a list as specified by WSGI specs.
-		headers = [('Content-type', 'text/plain')]
-
-		# start_response is used to begin the HTTP response.
-		# This sends the response headers to the server, which sends to the client.
-		start_response(status, headers)
-		
-		# TODO: Don't determine this here; use the URL routing/error handling to do this.
-		return ['Not found']
-	else:
-
-		# TODO: Do this elsewhere.
-		# Checks for the request method and responds accordingly.
-		if request.method == 'POST':
-			response = post_request_handler(request)
-		elif request.method == 'GET':
-			response = get_request_handler(request)
-		
-		# Sends the start of the response to the server, which sends it to the client.
-		start_response(response.status, response.headers)
-
-		# Sends the body of the response (usually, the html) to the server.
-		return [response.body]
-
 def get_request_handler(request):
 	"""Handles GET requests."""
 	
@@ -202,6 +163,52 @@ class TinyApp(object):
 			self.add_route(route, handler, **kwargs)
 			return handler
 		return wrapper
+
+
+	def request_handler(self, environ, start_response):
+		"""When the client makes a request, the server gets the environ w/ the
+		   request and passes it here. The handler uses the environ data to craft
+		   a response and send it back to the server using the start_response
+		   function, which is provided by the server."""
+
+		# Bind the global request object to the environ dict provided by the server.
+		request.bind(environ)
+
+		# URL Routing
+		# TODO: Move this into its own function/method
+		if request.path not in self.ROUTES:
+			# Status, headers represent the HTTP response expected by the client.
+			status = '404 NOT FOUND'
+
+			# Important that this remains a list as specified by WSGI specs.
+			headers = [('Content-type', 'text/plain')]
+
+			# start_response is used to begin the HTTP response.
+			# This sends the response headers to the server, which sends to the client.
+			start_response(status, headers)
+			
+			# TODO: Don't determine this here; use the URL routing/error handling to do this.
+			return ['Not found']
+		else:
+
+			# TODO: Do this elsewhere.
+			# Checks for the request method and responds accordingly.
+			if request.method == 'POST':
+				response = post_request_handler(request)
+			elif request.method == 'GET':
+				response = get_request_handler(request)
+			
+			# Sends the start of the response to the server, which sends it to the client.
+			start_response(response.status, response.headers)
+
+			# Sends the body of the response (usually, the html) to the server.
+			return [response.body]
+
+	def __call__(self, environ, start_response):
+		"""Makes the user's app a WSGI application. It is now callable by
+		   a WSGI server."""
+
+		return self.request_handler(environ, start_response)
 
 
 # TODO: HTTP/WSGI Headers
