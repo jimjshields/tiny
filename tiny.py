@@ -8,7 +8,7 @@ import cgi, inspect
 # urls used for defining routes. Ultimately this will be removed; the app
 # developer should be doing this on their own.
 # The developer will import Tiny methods and define everything on their own.
-from urls import *
+# from urls import *
 
 ### Server and run script ###
 
@@ -187,11 +187,10 @@ def add_handler(handler, url, methods=['GET']):
 	URLS[url] = (handler, methods)
 	return handler
 
+# TODO: Headers
 # TODO: Store URLs
 URLS = {}
 
-
-# TODO: Headers
 
 # TODO: Error handling
 
