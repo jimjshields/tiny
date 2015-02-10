@@ -2,16 +2,18 @@
 
 Example:
 
-    import tiny
+```python
+import tiny
 
-    app = tiny.TinyApp()
+app = tiny.TinyApp()
 
-    @app.route('/')
-    def index():
-        response = tiny.TinyResponse('Hello world')
-        return response
+@app.route('/')
+def index():
+    response = tiny.TinyResponse('Hello world')
+    return response
 
-    tiny.run_app(app)
+tiny.run_app(app)
+```
 
 
 * To Do:
