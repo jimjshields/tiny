@@ -82,8 +82,8 @@ class TinyResponse(object):
 	   on the request data. Tiny will bind that response data to an object of
 	   this class."""
 
-	def bind(self, status, headers, body):
-		"""Binds the response object to the app's response data."""
+	def __init__(self, status, headers, body):
+		"""Creates a response object that can hold the data for the HTTP response."""
 		self.status = status
 		self.headers = headers
 		self.body = body
