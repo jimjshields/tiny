@@ -33,97 +33,6 @@ def run_app(app):
 
 	wsgiref_server(app)
 
-### Request Handlers ###
-
-def request_handler(environ, start_response):
-	"""When the client makes a request, the server gets the environ w/ the
-	   request and passes it here. The handler uses the environ data to craft
-	   a response and send it back to the server using the start_response
-	   function, which is provided by the server."""
-
-	# Bind the global request object to the environ dict provided by the server.
-	request.bind(environ)
-
-	# URL Routing
-	# TODO: Move this into its own function/method
-	if request.path not in URLS:
-		# Status, headers represent the HTTP response expected by the client.
-		status = '404 NOT FOUND'
-
-		# Important that this remains a list as specified by WSGI specs.
-		headers = [('Content-type', 'text/plain')]
-
-		# start_response is used to begin the HTTP response.
-		# This sends the response headers to the server, which sends to the client.
-		start_response(status, headers)
-		
-		# TODO: Don't determine this here; use the URL routing/error handling to do this.
-		return ['Not found']
-	else:
-
-		# TODO: Do this elsewhere.
-		# Checks for the request method and responds accordingly.
-		if request.method == 'POST':
-			response = post_request_handler(request)
-		elif request.method == 'GET':
-			response = get_request_handler(request)
-		
-		# Sends the start of the response to the server, which sends it to the client.
-		start_response(response.status, response.headers)
-
-		# Sends the body of the response (usually, the html) to the server.
-		return [response.body]
-
-def get_request_handler(request):
-	"""Handles GET requests."""
-	
-	# Find the function name given by the path.
-	# TODO: Do URL matching on its own.
-	fun_name = URLS[request.path]
-
-	# Store num of arguments in the handler function.
-	arg_num = len(inspect.getargspec(fun_name)[0])
-
-	# If there aren't any arguments, don't pass the get_data dict to it.
-	if arg_num == 0:
-		body = fun_name()
-	else:
-		body = fun_name(request.get_data)
-
-	# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error.
-
-	status = '200 OK'
-	headers = [('Content-type', 'text/html')]
-
-	# Bind the crafted response data to the global response object and return it.
-	response.bind(status, headers, body)
-	return response
-
-def post_request_handler(request):
-	"""Handles POST requests."""
-
-	# Find the function name given by the path.
-	# TODO: Do URL matching on its own.
-	fun_name = URLS[request.path]
-	
-	# Store num of arguments in the handler function.
-	arg_num = len(inspect.getargspec(fun_name)[0])
-
-	# If there aren't any arguments, don't pass the get_data dict to it.
-	if arg_num == 0:
-		body = fun_name()
-	else:
-		body = fun_name(request.post_data)
-
-	# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error
-
-	status = '200 OK'
-	headers = [('Content-type', 'text/html')]
-
-	# Bind the crafted response data to the global response object and return it.
-	response.bind(status, headers, body)
-	return response
-
 ### Request and Response Classes ###
 
 class TinyRequest(object):
@@ -179,17 +88,129 @@ class TinyResponse(object):
 		self.headers = headers
 		self.body = body
 
-# TODO: Routing decorator - doesn't work yet
+class TinyApp(object):
+	"""Represents an app created by the user.
+	   Holds the data and functionality needed by the user to create
+	   a simple app."""
 
-def add_handler(handler, url, methods=['GET']):
-	"""Adds a handler function to the URLS dict for routing."""
+	def __init__(self):
+		"""Initializes the app object with an empty dict of routes."""
 
-	URLS[url] = (handler, methods)
-	return handler
+		self.ROUTES = {}
 
-# TODO: Headers
-# TODO: Store URLs
-URLS = {}
+	def add_route(self, route, handler, methods=['GET']):
+		"""Adds a function to the app's routing dict.
+		   Handler - function defined by the user that creates a response."""
+
+		self.ROUTES[route] = (handler, methods)
+
+	def route(self, route, **kwargs):
+		"""Decorator for add_route."""
+
+		def wrapper(handler):
+			self.add_route(route, handler, **kwargs)
+			return handler
+		return wrapper
+
+	### Request Handlers ###
+
+	def request_handler(self, environ, start_response):
+		"""When the client makes a request, the server gets the environ w/ the
+		   request and passes it here. The handler uses the environ data to craft
+		   a response and send it back to the server using the start_response
+		   function, which is provided by the server."""
+
+		# Bind the global request object to the environ dict provided by the server.
+		request.bind(environ)
+
+		# URL Routing
+		# TODO: Move this into its own function/method
+		if request.path not in self.ROUTES:
+			# Status, headers represent the HTTP response expected by the client.
+			status = '404 NOT FOUND'
+
+			# Important that this remains a list as specified by WSGI specs.
+			headers = [('Content-type', 'text/plain')]
+
+			# start_response is used to begin the HTTP response.
+			# This sends the response headers to the server, which sends to the client.
+			start_response(status, headers)
+			
+			# TODO: Don't determine this here; use the URL routing/error handling to do this.
+			return ['Not found']
+		else:
+
+			# TODO: Do this elsewhere.
+			# Checks for the request method and responds accordingly.
+			if request.method == 'POST':
+				response = self.post_request_handler(request)
+			elif request.method == 'GET':
+				response = self.get_request_handler(request)
+			
+			# Sends the start of the response to the server, which sends it to the client.
+			start_response(response.status, response.headers)
+
+			# Sends the body of the response (usually, the html) to the server.
+			return [response.body]
+
+	def get_request_handler(self, request):
+		"""Handles GET requests."""
+		
+		# Find the function name given by the path.
+		# TODO: Do URL matching on its own.
+		fun_name = self.ROUTES[request.path][0]
+
+		# Store num of arguments in the handler function.
+		arg_num = len(inspect.getargspec(fun_name)[0])
+
+		# If there aren't any arguments, don't pass the get_data dict to it.
+		if arg_num == 0:
+			body = fun_name()
+		else:
+			body = fun_name(request.get_data)
+
+		# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error.
+
+		status = '200 OK'
+		headers = [('Content-type', 'text/html')]
+
+		# Bind the crafted response data to the global response object and return it.
+		response.bind(status, headers, body)
+		return response
+
+	def post_request_handler(self, request):
+		"""Handles POST requests."""
+
+		# Find the function name given by the path.
+		# TODO: Do URL matching on its own.
+		fun_name = self.ROUTES[request.path][0]
+		
+		# Store num of arguments in the handler function.
+		arg_num = len(inspect.getargspec(fun_name)[0])
+
+		# If there aren't any arguments, don't pass the get_data dict to it.
+		if arg_num == 0:
+			body = fun_name()
+		else:
+			body = fun_name(request.post_data)
+
+		# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error
+
+		status = '200 OK'
+		headers = [('Content-type', 'text/html')]
+
+		# Bind the crafted response data to the global response object and return it.
+		response.bind(status, headers, body)
+		return response
+
+	def __call__(self, environ, start_response):
+		"""Makes the user's app a WSGI application. It is now callable by
+		   a WSGI server."""
+
+		return self.request_handler(environ, start_response)
+
+
+# TODO: HTTP/WSGI Headers
 
 
 # TODO: Error handling
