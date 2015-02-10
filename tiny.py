@@ -33,58 +33,6 @@ def run_app(app):
 
 	wsgiref_server(app)
 
-### Request Handlers ###
-
-def get_request_handler(request):
-	"""Handles GET requests."""
-	
-	# Find the function name given by the path.
-	# TODO: Do URL matching on its own.
-	fun_name = URLS[request.path]
-
-	# Store num of arguments in the handler function.
-	arg_num = len(inspect.getargspec(fun_name)[0])
-
-	# If there aren't any arguments, don't pass the get_data dict to it.
-	if arg_num == 0:
-		body = fun_name()
-	else:
-		body = fun_name(request.get_data)
-
-	# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error.
-
-	status = '200 OK'
-	headers = [('Content-type', 'text/html')]
-
-	# Bind the crafted response data to the global response object and return it.
-	response.bind(status, headers, body)
-	return response
-
-def post_request_handler(request):
-	"""Handles POST requests."""
-
-	# Find the function name given by the path.
-	# TODO: Do URL matching on its own.
-	fun_name = URLS[request.path]
-	
-	# Store num of arguments in the handler function.
-	arg_num = len(inspect.getargspec(fun_name)[0])
-
-	# If there aren't any arguments, don't pass the get_data dict to it.
-	if arg_num == 0:
-		body = fun_name()
-	else:
-		body = fun_name(request.post_data)
-
-	# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error
-
-	status = '200 OK'
-	headers = [('Content-type', 'text/html')]
-
-	# Bind the crafted response data to the global response object and return it.
-	response.bind(status, headers, body)
-	return response
-
 ### Request and Response Classes ###
 
 class TinyRequest(object):
@@ -164,6 +112,7 @@ class TinyApp(object):
 			return handler
 		return wrapper
 
+	### Request Handlers ###
 
 	def request_handler(self, environ, start_response):
 		"""When the client makes a request, the server gets the environ w/ the
@@ -194,15 +143,65 @@ class TinyApp(object):
 			# TODO: Do this elsewhere.
 			# Checks for the request method and responds accordingly.
 			if request.method == 'POST':
-				response = post_request_handler(request)
+				response = self.post_request_handler(request)
 			elif request.method == 'GET':
-				response = get_request_handler(request)
+				response = self.get_request_handler(request)
 			
 			# Sends the start of the response to the server, which sends it to the client.
 			start_response(response.status, response.headers)
 
 			# Sends the body of the response (usually, the html) to the server.
 			return [response.body]
+
+	def get_request_handler(self, request):
+		"""Handles GET requests."""
+		
+		# Find the function name given by the path.
+		# TODO: Do URL matching on its own.
+		fun_name = self.ROUTES[request.path][0]
+
+		# Store num of arguments in the handler function.
+		arg_num = len(inspect.getargspec(fun_name)[0])
+
+		# If there aren't any arguments, don't pass the get_data dict to it.
+		if arg_num == 0:
+			body = fun_name()
+		else:
+			body = fun_name(request.get_data)
+
+		# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error.
+
+		status = '200 OK'
+		headers = [('Content-type', 'text/html')]
+
+		# Bind the crafted response data to the global response object and return it.
+		response.bind(status, headers, body)
+		return response
+
+	def post_request_handler(self, request):
+		"""Handles POST requests."""
+
+		# Find the function name given by the path.
+		# TODO: Do URL matching on its own.
+		fun_name = self.ROUTES[request.path][0]
+		
+		# Store num of arguments in the handler function.
+		arg_num = len(inspect.getargspec(fun_name)[0])
+
+		# If there aren't any arguments, don't pass the get_data dict to it.
+		if arg_num == 0:
+			body = fun_name()
+		else:
+			body = fun_name(request.post_data)
+
+		# TODO: check if the content is good - if so send it through; otherwise throw an HTTP error
+
+		status = '200 OK'
+		headers = [('Content-type', 'text/html')]
+
+		# Bind the crafted response data to the global response object and return it.
+		response.bind(status, headers, body)
+		return response
 
 	def __call__(self, environ, start_response):
 		"""Makes the user's app a WSGI application. It is now callable by
