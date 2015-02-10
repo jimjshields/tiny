@@ -179,17 +179,32 @@ class TinyResponse(object):
 		self.headers = headers
 		self.body = body
 
-# TODO: Routing decorator - doesn't work yet
+class TinyApp(object):
+	"""Represents an app created by the user.
+	   Holds the data and functionality needed by the user to create
+	   a simple app."""
 
-def add_handler(handler, url, methods=['GET']):
-	"""Adds a handler function to the URLS dict for routing."""
+	def __init__(self):
+		"""Initializes the app object with an empty dict of routes."""
 
-	URLS[url] = (handler, methods)
-	return handler
+		self.ROUTES = {}
 
-# TODO: Headers
-# TODO: Store URLs
-URLS = {}
+	def add_route(self, route, handler, methods=['GET']):
+		"""Adds a function to the app's routing dict.
+		   Handler - function defined by the user that creates a response."""
+
+		self.ROUTES[route] = (handler, methods)
+
+	def route(self, route, **kwargs):
+		"""Decorator for add_route."""
+
+		def wrapper(handler):
+			self.add_route(route, handler, **kwargs)
+			return handler
+		return wrapper
+
+
+# TODO: HTTP/WSGI Headers
 
 
 # TODO: Error handling
