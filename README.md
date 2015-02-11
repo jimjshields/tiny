@@ -2,8 +2,10 @@
 
 Example:
 
+    pip install tiny
+
 ```python
-import tiny
+from tiny import tiny
 
 app = tiny.TinyApp()
 
