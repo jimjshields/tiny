@@ -4,7 +4,7 @@ most basic possible web framework in Python.
 """
 
 # cgi used for form parsing; inspect used for argument counting for routing.
-import cgi, inspect
+import cgi, inspect, os
 
 class TinyApp(object):
 	"""Represents an app created by the user.
@@ -74,6 +74,18 @@ class TinyApp(object):
 
 			# Sends the body of the response (usually, the html) to the server.
 			return [response.body]
+
+	def register_templates_dir(self, template_path):
+		"""Registers an absolute template path as the app's template directory."""
+
+		self.template_path = template_path
+
+	def render(self, template_name):
+		"""Outputs text of an HTML file from a given template name.
+		   Assumes the template is coming from the registered templates dir."""
+
+		template = open(os.path.join(self.template_path, template_name))
+		return template.read()
 
 	def __call__(self, environ, start_response):
 		"""Makes the user's app a WSGI application. It is now callable by
