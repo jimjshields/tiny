@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='tiny',
-	  version='0.1.1',
+	  version='0.1.2',
 	  description='A small web framework for learning about web frameworks.',
 	  url='https://github.com/jimjshields/tiny',
 	  author='Jim Shields',
