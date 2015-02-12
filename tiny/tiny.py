@@ -75,7 +75,7 @@ class TinyApp(object):
 			# Sends the body of the response (usually, the html) to the server.
 			return [response.body]
 
-	def register_templates_dir(self, template_path):
+	def set_template_path(self, template_path):
 		"""Registers an absolute template path as the app's template directory."""
 
 		self.template_path = template_path
