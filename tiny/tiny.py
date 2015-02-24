@@ -14,13 +14,13 @@ class TinyApp(object):
 	def __init__(self):
 		"""Initializes the app object with an empty dict of routes."""
 
-		self.ROUTES = {}
+		self.routes = {}
 
 	def add_route(self, route, handler, methods=['GET']):
 		"""Adds a function to the app's routing dict.
 		   Handler - function defined by the user that creates a response."""
 
-		self.ROUTES[route] = (handler, methods)
+		self.routes[route] = (handler, methods)
 
 	def route(self, route, **kwargs):
 		"""Decorator for add_route."""
@@ -39,48 +39,25 @@ class TinyApp(object):
 		   function, which is provided by the server."""
 
 		request = TinyRequest(environ)
+		action_fun, action_methods = self.routes.get(request.path, (None, None)) 
 
 		# TODO: Move this into its own function/method
 		# TODO: Request handling is failing on multiple subsequent requests of different types.
-		if request.path not in self.ROUTES:
-			status_code = 404
-			status_reason_phrase = HTTP_CODES[status_code][0]
-			status_url = HTTP_CODES[status_code][1]
-			body = '<a href="{0}"><h1>{1}: {2}</h1></a>'.format(status_url, status_code, status_reason_phrase)
-			response = TinyResponse(body, status_code)
-			start_response(response.status, response.headers)
-			
-			# TODO: Don't determine this here; use the URL routing/error handling to do this.
-			return [response.body]
+		if not action_fun:
+			response = TinyResponse.error(404)
+		elif request.method not in action_methods:
+			response = TinyResponse.error(405)
 		else:
-			action = self.ROUTES[request.path]
+			arg_num = len(inspect.getargspec(action_fun)[0])
 
-			if request.method not in action[1]:
-				status_code = 405
-				status_reason_phrase = HTTP_CODES[status_code][0]
-				status_url = HTTP_CODES[status_code][1]
-				body = '<a href="{0}"><h1>{1}: {2}</h1></a>'.format(status_url, status_code, status_reason_phrase)
-				response = TinyResponse(body, status_code)
-				start_response(response.status, response.headers)
-				
-				# TODO: Don't determine this here; use the URL routing/error handling to do this.
-				return [response.body]
+			# If there aren't any arguments, don't pass the get_data dict to it.
+			if arg_num == 0:
+				response = action_fun()
 			else:
-				action_fun = action[0]
-				# Store num of arguments in the handler function.
-				arg_num = len(inspect.getargspec(action_fun)[0])
+				response = action_fun(request)
 
-				# If there aren't any arguments, don't pass the get_data dict to it.
-				if arg_num == 0:
-					response = action_fun()
-				else:
-					response = action_fun(request)
-				
-				# Sends the start of the response to the server, which sends it to the client.
-				start_response(response.status, response.headers)
-
-				# Sends the body of the response (usually, the html) to the server.
-				return [response.body]
+		start_response(response.status, response.headers)
+		return [response.body]
 
 	def set_template_path(self, template_path):
 		"""Registers an absolute template path as the app's template directory."""
@@ -93,7 +70,7 @@ class TinyApp(object):
 
 		template_content = open(os.path.join(self.template_path, template_name)).read()
 		pattern = re.compile(r"({{\s?(\w+)\s?}})")
-		replacements = {k[0]: k[1] for k in kwargs.iteritems()} #'{0}'.format(k[0]): '{1}'.format(k[1]) 
+		replacements = {k[0]: k[1] for k in kwargs.iteritems()}
 		template_vars = {k[0]: replacements[k[1]] for k in re.findall(pattern, template_content)}
 		replacement_pattern = re.compile('|'.join(["{{ %s }}" % (i) for i in replacements.keys()]))
 		replaced_content = replacement_pattern.sub(lambda m: template_vars[m.group(0)], template_content)
@@ -125,13 +102,24 @@ class TinyRequest(object):
 		# Standardizes request methods.
 		self.method = self.environ.get('REQUEST_METHOD', '').upper()
 
-		self.get_data = None
-		self.post_data = None
+		self._get_data = None
+		self._post_data = None
 
-		if self.method == 'GET':
-			self.get_data = self.get()
-		elif self.method == 'POST':
-			self.post_data = self.post()
+	@property
+	def get_data(self):
+		"""Returns parsed dictionary of query string parameters."""
+
+		if self.method == 'GET' and self._get_data is None:
+			self._get_data = self.get()
+		return self._get_data
+
+	@property
+	def post_data(self):
+		"""Returns parsed dictionary of post data."""
+
+		if self.method == 'POST' and self._post_data is None:
+			self._post_data = self.post()
+		return self._post_data
 
 	def get(self):
 		"""Parses the query string of a get request and returns it in 
@@ -162,6 +150,15 @@ class TinyResponse(object):
 		self.body = body
 		self.status = "{0} {1}".format(status_code, HTTP_CODES[status_code][0])
 		self.headers = headers
+
+	@classmethod
+	def error(cls, status_code):
+		"""Given a response class and a status code, returns a response object."""
+
+		status_reason_phrase = HTTP_CODES[status_code][0]
+		status_url = HTTP_CODES[status_code][1]
+		body = '<a href="{0}"><h1>{1}: {2}</h1></a>'.format(status_url, status_code, status_reason_phrase)
+		return cls(body, status_code)
 
 
 # TODO: HTTP/WSGI Headers

@@ -18,14 +18,14 @@ class TestTinyApp(unittest.TestCase):
 	def test_app_init(self):
 		"""Tests that each app is initialized with an empty routes dict."""
 
-		self.assertEqual(self.app.ROUTES, {})
+		self.assertEqual(self.app.routes, {})
 
 	def test_add_route(self):
 		"""Tests that adding a route actually adds a route to the dictionary."""
 
 		handler = lambda x: x
 		self.app.add_route('/index', handler)
-		self.assertEqual(self.app.ROUTES, {'/index': (handler, ['GET'])})
+		self.assertEqual(self.app.routes, {'/index': (handler, ['GET'])})
 
 	def test_route(self):
 		"""Tests that the route decorator also adds a route to the dictionary."""
@@ -34,7 +34,7 @@ class TestTinyApp(unittest.TestCase):
 		def decorator_handler():
 			pass
 
-		self.assertEqual(self.app.ROUTES, {'/index': (decorator_handler, ['GET'])})
+		self.assertEqual(self.app.routes, {'/index': (decorator_handler, ['GET'])})
 
 	def test_request_handler(self):
 		"""Tests that the request handler receives a request and returns an
