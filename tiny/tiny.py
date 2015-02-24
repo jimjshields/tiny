@@ -3,8 +3,52 @@ tiny.py is a practice project that implements the
 most basic possible web framework in Python.
 """
 
-# cgi used for form parsing; inspect used for argument counting for routing.
+# cgi used for form parsing; inspect used for argument counting for routing; os used for template directory.
 import cgi, inspect, os
+
+# Taken from http://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html#sec6.1.1.
+HTTP_CODES = {
+	100: ('Continue', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.1.1'),
+	101: ('Switching Protocols', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.1.2'),
+	200: ('OK', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1'),
+	201: ('Created', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.2'),
+	202: ('Accepted', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.3'),
+	203: ('Non-Authoritative Information', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.4'),
+	204: ('No Content', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.5'),
+	205: ('Reset Content', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.6'),
+	206: ('Partial Content', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.7'),
+	300: ('Multiple Choices', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.1'),
+	301: ('Moved Permanently', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.2'),
+	302: ('Found', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.3'),
+	303: ('See Other', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4'),
+	304: ('Not Modified', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.5'),
+	305: ('Use Proxy', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.6'),
+	307: ('Temporary Redirect', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.8'),
+	400: ('Bad Request', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.1'),
+	401: ('Unauthorized', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.2'),
+	402: ('Payment Required', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.3'),
+	403: ('Forbidden', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4'),
+	404: ('Not Found','http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5'),
+	405: ('Method Not Allowed', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.6'),
+	406: ('Not Acceptable', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.7'),
+	407: ('Proxy Authentication Required', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.8'),
+	408: ('Request Timeout', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.9'),
+	409: ('Conflict', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.10'),
+	410: ('Gone', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.11'),
+	411: ('Length Required', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.12'),
+	412: ('Precondition Failed', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.13'),
+	413: ('Request Entity Too Large', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.14'),
+	414: ('Request-URI Too Long', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.15'),
+	415: ('Unsupported Media Type', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.16'),
+	416: ('Requested Range Not Satisfiable', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.17'),
+	417: ('Expectation Failed', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.18'),
+	500: ('Internal Server Error', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.1'),
+	501: ('Not Implemented', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.2'),
+	502: ('Bad Gateway', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.3'),
+	503: ('Service Unavailable', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.4'),
+	504: ('Gateway Timeout', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.5'),
+	505: ('HTTP Version Not Supported', 'http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.6')
+}
 
 class TinyApp(object):
 	"""Represents an app created by the user.
