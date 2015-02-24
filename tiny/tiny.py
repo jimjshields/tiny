@@ -84,40 +84,46 @@ class TinyApp(object):
 
 		request = TinyRequest(environ)
 
-		action = self.ROUTES[request.path]
-
 		# URL Routing
 		# TODO: Move this into its own function/method
-		if request.path not in self.ROUTES or request.method not in action[1]:
+		if request.path not in self.ROUTES:
 			# Status, headers represent the HTTP response expected by the client.
-			status = '404 NOT FOUND'
-
-			# Important that this remains a list as specified by WSGI specs.
-			headers = [('Content-type', 'text/plain')]
-
+			status_code = 404
+			body = '<a href="{0}"><h1>{1}</h1></a>'.format(HTTP_CODES[status_code][1], HTTP_CODES[status_code][0])
+			response = TinyResponse(body, status_code)
 			# start_response is used to begin the HTTP response.
 			# This sends the response headers to the server, which sends to the client.
-			start_response(status, headers)
+			start_response(response.status, response.headers)
 			
 			# TODO: Don't determine this here; use the URL routing/error handling to do this.
-			return ['Not found']
-		else:
-			action_fun = action[0]
-
-			# Store num of arguments in the handler function.
-			arg_num = len(inspect.getargspec(action_fun)[0])
-
-			# If there aren't any arguments, don't pass the get_data dict to it.
-			if arg_num == 0:
-				response = action_fun()
-			else:
-				response = action_fun(request)
-			
-			# Sends the start of the response to the server, which sends it to the client.
-			start_response(response.status, response.headers)
-
-			# Sends the body of the response (usually, the html) to the server.
 			return [response.body]
+		else:
+			action = self.ROUTES[request.path]
+
+			if request.method not in action[1]:
+				status_code = 405
+				body = '<a href="{0}"><h1>{1}</h1></a>'.format(HTTP_CODES[status_code][1], HTTP_CODES[status_code][0])
+				response = TinyResponse(body, status_code)
+				start_response(response.status, response.headers)
+				
+				# TODO: Don't determine this here; use the URL routing/error handling to do this.
+				return [response.body]
+			else:
+				action_fun = action[0]
+				# Store num of arguments in the handler function.
+				arg_num = len(inspect.getargspec(action_fun)[0])
+
+				# If there aren't any arguments, don't pass the get_data dict to it.
+				if arg_num == 0:
+					response = action_fun()
+				else:
+					response = action_fun(request)
+				
+				# Sends the start of the response to the server, which sends it to the client.
+				start_response(response.status, response.headers)
+
+				# Sends the body of the response (usually, the html) to the server.
+				return [response.body]
 
 	def set_template_path(self, template_path):
 		"""Registers an absolute template path as the app's template directory."""
@@ -181,18 +187,19 @@ class TinyRequest(object):
 		return post_dict
 
 class TinyResponse(object):
-	"""Represents a request object. It is initialized upon starting the app.
+	"""Represents a response object. It is initialized upon starting the app.
 	   When a user makes a request, the app will formulate the response based
 	   on the request data. Tiny will bind that response data to an object of
 	   this class."""
 
-	def __init__(self, body, status='200 OK', headers=[('Content-Type', 'text/html')]):
+	def __init__(self, body, status_code=200, headers=[('Content-Type', 'text/html')]):
 		"""Creates a response object that can hold the data for the HTTP response.
 		   Defaults to a '200 OK' response with HTML content but allows user to 
 		   override."""
 		
 		self.body = body
-		self.status = status
+		self.status = "{0} {1}".format(status_code, HTTP_CODES[status_code][0])
+		print self.status
 		self.headers = headers
 
 
