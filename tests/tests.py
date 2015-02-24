@@ -50,7 +50,7 @@ class TestTinyApp(unittest.TestCase):
 	def test_render(self):
 		"""Tests that rendering a given template works."""
 
-		template_content = self.app.render('test.html')
+		template_content = self.app.render('test_render.html', test_var='Testing templates')
 		self.assertEqual(template_content, 'Testing templates')
 
 class TestTinyRequest(unittest.TestCase):
