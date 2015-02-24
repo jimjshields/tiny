@@ -94,12 +94,10 @@ class TinyRequest(object):
 		"""Binds the request object to the user's request data."""
 
 		self.environ = environ
-		self.path = self.environ.get('PATH_INFO', '/')
 
-		# Standardizes path slashes.
+		self.path = self.environ.get('PATH_INFO', '/')
 		self.path = '/' + self.path if not self.path[0] == '/' else self.path
 
-		# Standardizes request methods.
 		self.method = self.environ.get('REQUEST_METHOD', '').upper()
 
 		self._get_data = None
@@ -137,14 +135,13 @@ class TinyRequest(object):
 		return post_dict
 
 class TinyResponse(object):
-	"""Represents a response object. It is initialized upon starting the app.
-	   When a user makes a request, the app will formulate the response based
-	   on the request data. Tiny will bind that response data to an object of
-	   this class."""
+	"""Represents a response object. When a user makes a request, the app will 
+	   formulate the response based on the request data. Tiny binds that response 
+	   data to an object of this class."""
 
 	def __init__(self, body, status_code=200, headers=[('Content-Type', 'text/html')]):
 		"""Creates a response object that can hold the data for the HTTP response.
-		   Defaults to a '200 OK' response with HTML content but allows user to 
+		   Defaults to a '200' response with HTML content but allows user to 
 		   override."""
 		
 		self.body = body
@@ -153,7 +150,7 @@ class TinyResponse(object):
 
 	@classmethod
 	def error(cls, status_code):
-		"""Given a response class and a status code, returns a response object."""
+		"""Returns a response object given a response class and a status code."""
 
 		status_reason_phrase = HTTP_CODES[status_code][0]
 		status_url = HTTP_CODES[status_code][1]
