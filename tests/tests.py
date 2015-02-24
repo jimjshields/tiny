@@ -40,7 +40,7 @@ class TestTinyApp(unittest.TestCase):
 		"""Tests that the request handler receives a request and returns an
 		   appropriate response."""
 
-		# Test to go here when best approach is decided.
+		# Tests to go here when best approach is decided for testing connecting to the app and making requests.
 
 	def test_set_template_path(self):
 		"""Tests that registering the template path to the app saves it to the app."""
@@ -56,7 +56,12 @@ class TestTinyApp(unittest.TestCase):
 class TestTinyRequest(unittest.TestCase):
 	"""Base class for testing TinyRequest."""
 
-	
+	# Tests to go here when best approach is decided for testing connecting to the app and making requests.
+
+class TestTinyResponse(unittest.TestCase):
+	"""Base class for testing TinyResponse."""
+
+	# Tests to go here when best approach is decided for testing connecting to the app and making requests.
 
 if __name__ == "__main__":
 	unittest.main()
