@@ -1,20 +1,62 @@
 ##Tiny - The tiniest possible web framework. Inspired by [Flask](https://github.com/mitsuhiko/flask), [Bottle](https://github.com/bottlepy/bottle), and [Itty](https://github.com/toastdriven/itty/).
 
-Example:
+To Install:
 
     pip install tiny
 
-```python
-from tiny import tiny
+To create a simple app:
 
+```python
+import tiny, os
+
+# Creates the app object.
 app = tiny.TinyApp()
 
-@app.route('/')
-def index():
-    response = tiny.TinyResponse('Hello world')
-    return response
+# Sets the path for the app to find HTML templates.
+app.set_template_path(os.path.abspath('templates'))
 
-tiny.run_app(app)
+## Routing ###
+
+@app.route('/')
+def index(request):
+    """Defines the index view, accessible at '/'."""
+    
+    # Creates a response comprised of the content of index.html and rendered template variables.
+    content = tiny.TinyResponse(app.render('index.html', template_var="Hello world"))
+
+    # Whatever is returned in a view will display on the page.
+    return content # Hello world
+
+## HTTP Errors ##
+
+@app.route('/505')
+def error(request):
+
+    content = tiny.TinyResponse('HTTP Version Not Supported', 505)
+    return content
+
+if __name__ == '__main__':
+    tiny.run_app(app) # Will be accessible at localhost:8080 by default.
+```
+
+To create a template:
+
+```html
+<!-- index.html -->
+
+{{ template_var }}
+```
+
+To run the test suite:
+
+```python
+python tests/tests.py
+
+>> ......
+>> ----------------------------------------------------------------------
+>> Ran 6 tests in 0.001s
+>>
+>> OK
 ```
 
 
@@ -28,7 +70,7 @@ tiny.run_app(app)
   7. ~~[Handle responses more intelligently](https://github.com/jimjshields/tiny/commit/4e2fab42d38475eda23a68483b69ddda3b78e82b)~~
   8. Move matching URLs into its own method
   9. ~~[Make decorator for creating URLs](https://github.com/jimjshields/tiny/commit/500eabf18e0cd0257d2a066d93fba1a81416aceb)~~
-  10. Store HTTP statuses somewhere
+  10. ~~[Store HTTP statuses somewhere](https://github.com/jimjshields/tiny/commit/7de93913d7b7a9b6ce0bc0d41ff5b74ef7b071ca)~~
   11. Generalize HTTP statuses/headers
 
 * Overall Plan

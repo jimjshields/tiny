@@ -161,7 +161,6 @@ class TinyResponse(object):
 		
 		self.body = body
 		self.status = "{0} {1}".format(status_code, HTTP_CODES[status_code][0])
-		print self.status
 		self.headers = headers
 
 
