@@ -113,6 +113,11 @@ class TestTinyRequest(unittest.TestCase):
 		self.assertEqual(self.request._get_data, None)
 		self.assertEqual(self.request._post_data, None)
 
+	def test_get_data(self):
+		"""Tests that the data returned from a GET request is correctly parsed."""
+
+		# Test to go here when best approach is decided for making requests.
+
 class TestTinyResponse(unittest.TestCase):
 	"""Base class for testing TinyResponse."""
 
