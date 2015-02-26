@@ -102,11 +102,16 @@ class TestTinyRequest(unittest.TestCase):
 		"""Starts each test with a new, empty TinyRequest object."""
 
 		self.app = tiny.TinyApp()
+		self.environ = create_environ('/index', 'GET')
+		self.request = tiny.TinyRequest(self.environ)
 
+	def test_request_init(self):
+		"""Tests that the request initializes with the appropriate properties."""
 
-
-
-	# Tests to go here when best approach is decided for testing connecting to the app and making requests.
+		self.assertEqual(self.request.path, '/index')
+		self.assertEqual(self.request.method, 'GET')
+		self.assertEqual(self.request._get_data, None)
+		self.assertEqual(self.request._post_data, None)
 
 class TestTinyResponse(unittest.TestCase):
 	"""Base class for testing TinyResponse."""
