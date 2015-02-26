@@ -67,7 +67,7 @@ class TestRequestHandler(unittest.TestCase):
 		"""Tests that the request handler receives a request for a defined path and
 		   the supported 'GET' method and returns an appropriate response."""
 		
-		environ = self.create_environ('/index', 'GET')
+		environ = create_environ('/index', 'GET')
 		response = self.app.request_handler(environ, lambda x, y: None)
 		self.assertEqual(response, 'test')
 
@@ -75,7 +75,7 @@ class TestRequestHandler(unittest.TestCase):
 		"""Tests that the request handler receives a request for a defined path and
 		   the supported 'POST' method and returns an appropriate response."""
 		
-		environ = self.create_environ('/index', 'POST')
+		environ = create_environ('/index', 'POST')
 		response = self.app.request_handler(environ, lambda x, y: None)
 		self.assertEqual(response, 'test')
 
@@ -83,7 +83,7 @@ class TestRequestHandler(unittest.TestCase):
 		"""Tests that the request handler receives a request for an undefined path and
 		   the supported 'GET' method and returns an appropriate 404 error response."""
 		
-		environ = self.create_environ('/nonexistent', 'GET')
+		environ = create_environ('/nonexistent', 'GET')
 		response = self.app.request_handler(environ, lambda x, y: None)
 		self.assertEqual(response, '<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5"><h1>404: Not Found</h1></a>')
 
@@ -91,21 +91,20 @@ class TestRequestHandler(unittest.TestCase):
 		"""Tests that the request handler receives a request for a defined path and
 		   the unsupported 'PUT' method and returns an appropriate 405 error response."""
 		
-		environ = self.create_environ('/index', 'PUT')
+		environ = create_environ('/index', 'PUT')
 		response = self.app.request_handler(environ, lambda x, y: None)
 		self.assertEqual(response, '<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.6"><h1>405: Method Not Allowed</h1></a>')
 
-	def create_environ(self, path, method):
-		"""Helper method that creates an environment to be used for request handler tests."""
-
-		environ = {
-			'PATH_INFO': path,
-			'REQUEST_METHOD': method
-		}
-		return environ
-
 class TestTinyRequest(unittest.TestCase):
 	"""Base class for testing TinyRequest."""
+
+	def setUp(self):
+		"""Starts each test with a new, empty TinyRequest object."""
+
+		self.app = tiny.TinyApp()
+
+
+
 
 	# Tests to go here when best approach is decided for testing connecting to the app and making requests.
 
@@ -113,6 +112,12 @@ class TestTinyResponse(unittest.TestCase):
 	"""Base class for testing TinyResponse."""
 
 	# Tests to go here when best approach is decided for testing connecting to the app and making requests.
+
+def create_environ(path, method):
+	"""Helper method that creates an environment to be used for request handler tests."""
+
+	environ = {'PATH_INFO': path, 'REQUEST_METHOD': method}
+	return environ
 
 if __name__ == "__main__":
 	unittest.main()
