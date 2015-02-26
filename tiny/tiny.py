@@ -30,7 +30,7 @@ class TinyApp(object):
 			return handler
 		return wrapper
 
-	### Request Handlers ###
+	### Request Handler ###
 
 	def request_handler(self, environ, start_response):
 		"""When the client makes a request, the server gets the environ w/ the
@@ -41,8 +41,8 @@ class TinyApp(object):
 		request = TinyRequest(environ)
 		action_fun, action_methods = self.routes.get(request.path, (None, None)) 
 
-		# TODO: Move this into its own function/method
-		# TODO: Request handling is failing on multiple subsequent requests of different types.
+		# TODO: Move this into its own function/method.
+		# FIXME: Request handling is failing on multiple subsequent requests of different types.
 		if not action_fun:
 			response = TinyResponse.error(404)
 		elif request.method not in action_methods:
@@ -57,13 +57,14 @@ class TinyApp(object):
 				response = action_fun(request)
 
 		start_response(response.status, response.headers)
-		return [response.body]
+		return response.body
 
 	def set_template_path(self, template_path):
 		"""Registers an absolute template path as the app's template directory."""
 
 		self.template_path = template_path
 
+	# FIXME: Refactor this code to be easier to understand.
 	def render(self, template_name, *args, **kwargs):
 		"""Outputs text of an HTML file from a given template name.
 		   Assumes the template is coming from the registered templates dir."""
