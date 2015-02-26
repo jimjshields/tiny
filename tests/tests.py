@@ -36,12 +36,6 @@ class TestTinyApp(unittest.TestCase):
 
 		self.assertEqual(self.app.routes, {'/index': (decorator_handler, ['GET'])})
 
-	def test_request_handler(self):
-		"""Tests that the request handler receives a request and returns an
-		   appropriate response."""
-
-		# Tests to go here when best approach is decided for testing connecting to the app and making requests.
-
 	def test_set_template_path(self):
 		"""Tests that registering the template path to the app saves it to the app."""
 
@@ -52,6 +46,63 @@ class TestTinyApp(unittest.TestCase):
 
 		template_content = self.app.render('test_render.html', test_var='Testing templates')
 		self.assertEqual(template_content, 'Testing templates')
+
+class TestRequestHandler(unittest.TestCase):
+	"""Base class for testing the request_handler method."""
+
+	def setUp(self):
+		"""Starts each test with a new, empty TinyApp object and a handler."""
+
+		self.app = tiny.TinyApp()
+		
+		handler = lambda x: tiny.TinyResponse('test')
+		self.app.add_route('/index', handler, ['GET', 'POST'])
+
+	def tearDown(self):
+		"""Ends each test by destroying the TinyApp object."""
+
+		del(self.app)
+
+	def test_request_handler_working_get_path(self):
+		"""Tests that the request handler receives a request for a defined path and
+		   the supported 'GET' method and returns an appropriate response."""
+		
+		environ = self.create_environ('/index', 'GET')
+		response = self.app.request_handler(environ, lambda x, y: None)
+		self.assertEqual(response, 'test')
+
+	def test_request_handler_working_post_path(self):
+		"""Tests that the request handler receives a request for a defined path and
+		   the supported 'POST' method and returns an appropriate response."""
+		
+		environ = self.create_environ('/index', 'POST')
+		response = self.app.request_handler(environ, lambda x, y: None)
+		self.assertEqual(response, 'test')
+
+	def test_request_handler_404(self):
+		"""Tests that the request handler receives a request for an undefined path and
+		   the supported 'GET' method and returns an appropriate 404 error response."""
+		
+		environ = self.create_environ('/nonexistent', 'GET')
+		response = self.app.request_handler(environ, lambda x, y: None)
+		self.assertEqual(response, '<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5"><h1>404: Not Found</h1></a>')
+
+	def test_request_handler_405(self):
+		"""Tests that the request handler receives a request for a defined path and
+		   the unsupported 'PUT' method and returns an appropriate 405 error response."""
+		
+		environ = self.create_environ('/index', 'PUT')
+		response = self.app.request_handler(environ, lambda x, y: None)
+		self.assertEqual(response, '<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.6"><h1>405: Method Not Allowed</h1></a>')
+
+	def create_environ(self, path, method):
+		"""Helper method that creates an environment to be used for request handler tests."""
+
+		environ = {
+			'PATH_INFO': path,
+			'REQUEST_METHOD': method
+		}
+		return environ
 
 class TestTinyRequest(unittest.TestCase):
 	"""Base class for testing TinyRequest."""
